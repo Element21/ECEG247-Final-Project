@@ -4,8 +4,19 @@
 
 [Time Tracking Sheet](https://docs.google.com/spreadsheets/d/1xr4k32L3ygDxVU9v8QFDOXWsWkOPOwjZAoNn3pgHziM/edit?gid=0#gid=0)
 
-Yohannes - Hardware, Core state machine?
+Yohannes
 
-Aiden - Random generation, Core state machine? (shared)
+- Hardware, Core state machine?
 
-Dante - Systems and data integrator
+Aiden
+
+- Random generation, Core state machine? (shared)
+
+Dante
+
+- Systems and data integrator
+
+## Extra pathways
+
+- Enclosure
+- Go no go (2nd LED)
