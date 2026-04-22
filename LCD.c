@@ -96,6 +96,9 @@ void printLongString(char inputString[], int delay) {
         // Print 16 char chunk
         printString(chunk);
         
+        // Home cursor
+        writeCommand(0x02);
+
         for (j = 0; j < delay; j++) {
             __delay_cycles(1000); // 1ms
         }
