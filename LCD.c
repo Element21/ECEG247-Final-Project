@@ -63,7 +63,7 @@ void initLCD(void) {
 }
 
 void printString(char* text) {
-    int i = 0;
+    unsigned int i = 0;
     while (text[i] != '\0') {
         writeChar(text[i]);
         i++;
@@ -71,22 +71,27 @@ void printString(char* text) {
 }
 
 void printLongString(char inputString[], int delay) {
-    /* Split inputString into chunks of length 16 and write them to the lcd with a specified delay in ms */
-    int len = 0;
+    /* Print 16 chars at a time, shifting left by one character each iteration */
+    unsigned int len = 0;
     while (inputString[len] != '\0') {
         len++;
     }
     
-    int num_outputs = (len + 15) / 16;
+    int num_shifts;
+    if (len > 16) {
+        num_shifts = len - 15;
+    } else {
+        num_shifts = 1;
+    }
     char chunk[17]; // 16 chars + end char
 
     unsigned int i = 0;
-    for (i = 0; i < num_outputs; i++) {
+    for (i = 0; i < num_shifts; i++) {
         unsigned int j;
         for (j = 0; j < 16; j++) {
             // Check if current char is in inputString
-            if ((i * 16 + j) < len) { // i = chunk #; j = offset
-                chunk[j] = inputString[i * 16 + j];
+            if ((i + j) < len) { // i = shift offset; j = char index in chunk
+                chunk[j] = inputString[i + j];
             } else {
                 chunk[j] = ' '; // fill with whitespace if not
             }
@@ -96,8 +101,11 @@ void printLongString(char inputString[], int delay) {
         // Print 16 char chunk
         printString(chunk);
         
-        // Home cursor
-        writeCommand(0x02);
+        // Move cursor back 16 spaces to the beginning of the current line
+        unsigned int k;
+        for (k = 0; k < 16; k++) {
+            writeCommand(0x10); // Shift cursor left
+        }
 
         for (j = 0; j < delay; j++) {
             __delay_cycles(1000); // 1ms
