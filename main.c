@@ -23,10 +23,22 @@ void waitForButton() {
 volatile unsigned long time_count = 0; // Count in 0.1ms (100us) increments
 volatile bool running = false;
 volatile unsigned int random_seed = 0; // On start button pushed, grab timer value to seed RNG
-const signed int SCROLL_DELAY_MS = 500;
-const signed int MIN_DELAY_MS = 102; // ms
-const signed int MAX_DELAY_MS = 500; // ms
+const signed int SCROLL_DELAY_MS = 250;
+const signed int MIN_DELAY_MS = 1000; // ms
+const signed int MAX_DELAY_MS = 5000; // ms
 const signed int NUM_TRIALS = 10;
+
+void formatTimeString(char* outStr, unsigned long t_count) {
+    strcpy(outStr, "0.0000s         ");
+    unsigned int whole = t_count / 10000;
+    unsigned int frac = t_count % 10000;
+    outStr[0] = '0' + whole; // Assuming < 10s
+    outStr[2] = '0' + (frac / 1000);
+    outStr[3] = '0' + ((frac / 100) % 10);
+    outStr[4] = '0' + ((frac / 10) % 10);
+    outStr[5] = '0' + (frac % 10);
+    outStr[7] = '\0';
+}
 
 int main(void) {
     WDTCTL = WDTPW + WDTHOLD;                 // Stop watchdog timer
@@ -34,6 +46,13 @@ int main(void) {
     // 1MHz clock
     DCOCTL = CALDCO_1MHZ;
     BCSCTL1 = CALBC1_1MHZ;
+
+    // Setup timer A0: SMCLK (1MHz), Up mode
+    TA0CCR0 = 100;                // 100us interval (1MHz clock)
+    TA0CCTL0 = CCIE;                  // Enable Timer A0 CCR0 interrupt
+    TA0CTL = TASSEL_2 | MC_1 | TACLR; // SMCLK, Up mode, clear TA0R
+
+    __enable_interrupt();             // Enable global interrupts
 
     // Setting up port directions
     // We only need P1.4, P1.5, P1.6, P1.7 as outputs for data
@@ -56,24 +75,24 @@ int main(void) {
 
         // Home cursor
         writeCommand(0x02);
-        printLongString("MSP430 Human Factors Platform", 500);
+        printLongString("MSP430 Human Factors Platform", SCROLL_DELAY_MS - 80);
 
         __delay_cycles(500000); // 500 ms
 
         // Clear display
         writeCommand(0x01);
 
-        while (BIT3 & P1IN) {
-            // home cursor, clear
-            writeCommand(0x01);
-            writeCommand(0x02);
+        // home cursor, clear
+        writeCommand(0x01);
+        writeCommand(0x02);
 
-            printLongString("When the LED lights press button!", 500);
+        printLongString("When the LED lights press button!", SCROLL_DELAY_MS);
 
-            // Col 1, row 2
-            writeCommand(0xC0);
-            printLongString("Press button to begin!", 500);
-        }
+        // Col 1, row 2
+        writeCommand(0xC0);
+        printLongString("Press button to begin!", SCROLL_DELAY_MS);
+
+        waitForButton();
         
         unsigned int trialIdx = 0;
         unsigned long total_time_count = 0; // Accumulate time
@@ -83,8 +102,13 @@ int main(void) {
             writeCommand(0x02);
             printString("   Get Ready!   ");
             writeCommand(0xC0); // Next line
-            char trialStr[17];
-            snprintf(trialStr, 17, "Trial: %d/%d", trialIdx + 1, NUM_TRIALS);
+            
+            char trialStr[17] = "  Trial: 00/00  ";
+            trialStr[9] = '0' + (trialIdx + 1) / 10;
+            trialStr[10] = '0' + (trialIdx + 1) % 10;
+            trialStr[12] = '0' + NUM_TRIALS / 10;
+            trialStr[13] = '0' + NUM_TRIALS % 10;
+            trialStr[16] = '\0';
             printString(trialStr);
 
             // Generate random time to wait before lighting LED
@@ -117,12 +141,20 @@ int main(void) {
 
             // Calculate reaction time (reaction_time = time_count * 0.1ms per interrupt)
             // 1 sec = 10,000 counts
+            writeCommand(0x01); // clear
             writeCommand(0x02); // Home
-            printString(" Reaction Time: ");
-            writeCommand(0xC0); // Second line
-            char timeStr[17];
-            snprintf(timeStr, 17, "%.4fs", time_count / 10000.0);
-            printString(timeStr);
+
+            if (time_count >= 100000) {
+                // If elapsed time is >= 10s, print a too long message
+                printString("   Too long!    ");
+            } else {
+                printString(" Reaction Time: ");
+                writeCommand(0xC0); // Second line
+                
+                char timeStr[17];
+                formatTimeString(timeStr, time_count);
+                printString(timeStr);
+            }
 
             // Turn off LED and prepare for next round
             P2OUT ^= BIT4;
@@ -140,8 +172,10 @@ int main(void) {
         writeCommand(0x02); // Home
         printString("  Avg Reaction  ");
         writeCommand(0xC0); // Second line
+        
         char avgStr[17];
-        snprintf(avgStr, 17, "%.4fs", (total_time_count / (float)NUM_TRIALS) / 10000.0); // 10000 ticks per sec
+        unsigned long avg_count = total_time_count / NUM_TRIALS;
+        formatTimeString(avgStr, avg_count);
         printString(avgStr);
 
         // Wait 5 seconds to restart the whole sequence

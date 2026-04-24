@@ -27,11 +27,12 @@ void writeCommand(char cmd){
     if (cmd == 0x01 || cmd == 0x02) {
         __delay_cycles(2000); // 2ms delay for clear/home commands
     } else {
-        __delay_cycles(50);   // 50us delay for normal commands
+        __delay_cycles(60);   // 60us delay for normal commands
     }
 }
 
 void writeChar(char data) {
+    __disable_interrupt();
     P2OUT |= RS;            // RS HIGH for Data/Text Mode
     
     // Send High Nibble, then Low Nibble
@@ -39,6 +40,7 @@ void writeChar(char data) {
     writeNibble(data << 4); 
 
     __delay_cycles(50);
+    __enable_interrupt();
 }
 
 void initLCD(void) {
