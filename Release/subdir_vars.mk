@@ -41,7 +41,6 @@ C_DEPS__QUOTED += \
 C_SRCS__QUOTED += \
 "../LCD.c" \
 "../Ultrasonic.c" \
-"../Utils.c" \
-"../main.c" 
+"../Utils.c" 
 
 

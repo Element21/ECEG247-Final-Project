@@ -1,0 +1,49 @@
+#include <msp430.h>
+#include <stdio.h>
+#include "LCD.h"
+#include "Ultrasonic.h"
+#include "Utils.h"
+
+/**
+ * ultrasonicTester.c
+ * 
+ * Measures distance using the HC-SR04 ultrasonic sensor and 
+ * displays the result on an I2C Liquid Crystal Display.
+ */
+
+int main(void) {
+    WDTCTL = WDTPW | WDTHOLD;   // Stop watchdog timer
+
+    // Set SMCLK to 1MHz
+    DCOCTL = 0;
+    BCSCTL1 = CALBC1_1MHZ;
+    DCOCTL = CALDCO_1MHZ;
+
+    initI2C();
+    initLCD();
+    initUltrasonic();
+
+    char displayBuffer[17];
+    char distStr[17];
+
+    // Initial message
+    writeCommand(0x01); // Clear Display
+    printString("Dist: --.- in");
+
+    while(1) {
+        unsigned int distance = getDistance(); // Returns distance as (pulseLength * 0.067)
+        
+        // formatDistance expects a float and a template string
+        // "Dist: 00.0 in" matches the length 13
+        formatDistance(distStr, "Dist: 00.0 in", (float)distance);
+        
+        // Move cursor to start of first line
+        writeCommand(0x80);
+        printString(distStr);
+
+        // Small delay between measurements
+        __delay_cycles(200000); // ~200ms
+    }
+
+    return 0;
+}

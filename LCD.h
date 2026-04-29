@@ -2,13 +2,9 @@
 
 #include <msp430.h>
 
-// PIN DEFINITIONS
-#define RS BIT2                        // P2.2 is Register Select
-#define EN BIT3                        // P2.3 is Enable
-
-// Function Prototypes
-void pulseEnable(void);
-void writeNibble(char nibble);
+void initI2C(void);
+void writeI2C(char data);
+void writeNibble(char nibble, char mode);
 void writeCommand(char cmd);
 void writeChar(char data);
 void initLCD(void);

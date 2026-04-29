@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/Program Files/TI/CCS2041/ccs/tools/compiler/ti-cgt-msp430_21.6.1.LTS/include/**",
+                "C:/Program Files/TI/CCS2041/ccs/ccs_base/msp430/include/**"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__MSP430G2553__"
+            ],
+            "windowsSdkVersion": "10.0.26100.0",
+            "compilerPath": "cl.exe",
+            "intelliSenseMode": "windows-msvc-x64",
+            "configurationProvider": "${default}"
+        }
+    ],
+    "version": 4
+}
